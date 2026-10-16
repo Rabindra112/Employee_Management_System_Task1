@@ -177,9 +177,7 @@ Common HTTP status codes:
 
 ## 11. Documentation
 
-Additional documentation is available in the docs folder:
+Additional documentation is available in the docs folder
 
-- employee_management_HLD.pdf
-- IMPLEMENTATION_AND_DESIGN.md
-- TEST_CASES.md
+
 

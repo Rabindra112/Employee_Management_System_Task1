@@ -1,7 +1,73 @@
+# =====================================
+# EMPLOYEE MANAGEMENT SYSTEM
+# Spring Boot + React + MySQL
+# =====================================
+
+# Java / Maven
 **/target/
+*.class
+*.jar
+*.war
+*.ear
+
+# Maven wrapper (keep wrapper files)
+!.mvn/wrapper/maven-wrapper.jar
+
+# React / Node.js / Vite
 **/node_modules/
 **/dist/
+**/build/
+**/coverage/
+
+# Environment variables
+.env
+.env.*
 **/.env
+**/.env.*
+
+# Keep example environment files
+!.env.example
+!.env.*.example
+!**/.env.example
+!**/.env.*.example
+
+# Local Spring Boot configuration
+**/application-local.properties
+**/application-local.yml
+**/application-local.yaml
+
+# IDE files
 .idea/
+*.iml
+.classpath
+.project
+.settings/
 .vscode/
+
+# Logs
 *.log
+logs/
+**/logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Temporary files
+*.tmp
+*.bak
+*.swp
+*.swo
+
+# Local database files
+*.db
+*.sqlite
+*.sqlite3
+
+# Database backups
+*.sql.bak
+
+# Cache
+.cache/
+**/.cache/

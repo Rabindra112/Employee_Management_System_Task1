@@ -6,6 +6,7 @@ import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 
@@ -13,6 +14,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Instant;
 import java.util.Map;
@@ -24,7 +26,7 @@ public class GlobalExceptionHandler {
 
     // COMMON ERROR RESPONSE
     private ResponseEntity<Map<String, Object>> error(
-            HttpStatus status,
+            HttpStatusCode status,
             String message,
             String path) {
 
@@ -92,6 +94,18 @@ public class GlobalExceptionHandler {
         return error(
                 HttpStatus.BAD_REQUEST,
                 "Invalid request parameters or JSON body",
+                request.getRequestURI()
+        );
+    }
+
+    @ExceptionHandler(ResponseStatusException.class)
+    public ResponseEntity<Map<String, Object>> handleResponseStatus(
+            ResponseStatusException ex,
+            HttpServletRequest request) {
+
+        return error(
+                ex.getStatusCode(),
+                ex.getReason() == null ? "Request failed" : ex.getReason(),
                 request.getRequestURI()
         );
     }

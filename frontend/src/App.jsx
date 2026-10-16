@@ -18,7 +18,7 @@ const initialStats = {
   totalSalary: 0,
 };
 
-export default function App() {
+export default function Dashboard({ user, onLogout }) {
   // Employee data
   const [employees, setEmployees] = useState([]);
   const [stats, setStats] = useState(initialStats);
@@ -190,9 +190,9 @@ export default function App() {
           <p>Manage employee records efficiently.</p>
         </div>
 
-        <button onClick={handleAdd}>
+        <div className="header-actions"><span>Welcome, {user?.fullName}</span><button className="secondary" onClick={onLogout}>Logout</button><button onClick={handleAdd}>
           + Add Employee
-        </button>
+        </button></div>
       </header>
 
       {/* ================= DASHBOARD ================= */}

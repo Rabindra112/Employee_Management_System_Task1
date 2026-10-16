@@ -2,7 +2,7 @@ package com.example.ems.service;
 
 import com.example.ems.dto.EmployeeRequest;
 import com.example.ems.entity.Employee;
-
+import com.example.ems.exception.ResourceNotFoundException;
 import com.example.ems.repository.EmployeeRepository;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -91,6 +91,28 @@ class EmployeeServiceTest {
     // TEST 3: EMPLOYEE NOT FOUND
     // =========================================
 
+    @Test
+    void missingEmployeeThrows404Exception() {
+
+        when(repository.findById(99L))
+                .thenReturn(Optional.empty());
+
+        ResourceNotFoundException exception = assertThrows(
+                ResourceNotFoundException.class,
+                () -> service.get(99L)
+        );
+
+        assertEquals(
+                "Employee not found with ID: 99",
+                exception.getMessage()
+        );
+
+        verify(repository).findById(99L);
+    }
+
+    // =========================================
+    // TEST 4: UPDATE EMPLOYEE
+    // =========================================
 
     @Test
     void updateEmployee() {
@@ -151,7 +173,24 @@ class EmployeeServiceTest {
     // TEST 6: DELETE NON-EXISTING EMPLOYEE
     // =========================================
 
+    @Test
+    void deleteMissingEmployee() {
 
+        when(repository.findById(99L))
+                .thenReturn(Optional.empty());
+
+        assertThrows(
+                ResourceNotFoundException.class,
+                () -> service.delete(99L)
+        );
+
+        verify(repository, never())
+                .delete(any(Employee.class));
+    }
+
+    // =========================================
+    // TEST 7: GET EMPLOYEE LIST
+    // =========================================
 
     @Test
     void listEmployees() {
