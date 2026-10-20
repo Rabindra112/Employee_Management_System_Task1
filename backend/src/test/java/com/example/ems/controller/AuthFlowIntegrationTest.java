@@ -1,31 +1,17 @@
 package com.example.ems.controller;
 
 import com.example.ems.entity.Employee;
-import com.example.ems.entity.User;
-import com.example.ems.repository.EmployeeRepository;
-import com.example.ems.repository.UserRepository;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
-import org.springframework.mail.MailSendException;
 import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.jwt.Jwt;
-import org.springframework.security.oauth2.jwt.JwtDecoder;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
 import java.math.BigDecimal;
@@ -37,8 +23,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -50,48 +34,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest(properties = {
-        "spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration,"
-                + "org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration,"
-                + "org.springframework.boot.autoconfigure.data.jpa.JpaRepositoriesAutoConfiguration",
-        "app.jwt.secret=integration-test-secret-with-more-than-32-bytes",
-        "spring.mail.username=sender@example.com",
-        "app.mail.login-alert-enabled=true"
-})
-@AutoConfigureMockMvc
-class AuthFlowIntegrationTest {
-
-    private static final String EMAIL = "riya@example.com";
-    private static final String PASSWORD = "test-password";
-
-    @Autowired
-    private MockMvc mvc;
-    @Autowired
-    private ObjectMapper objectMapper;
-    @Autowired
-    private PasswordEncoder passwordEncoder;
-    @Autowired
-    private JwtDecoder jwtDecoder;
-
-    @MockitoBean
-    private UserRepository userRepository;
-    @MockitoBean
-    private EmployeeRepository employeeRepository;
-    @MockitoBean
-    private JavaMailSender mailSender;
-
-    @BeforeEach
-    void setUp() {
-        User user = mock(User.class);
-        when(user.getId()).thenReturn(7L);
-        when(user.getFullName()).thenReturn("Riya Sharma");
-        when(user.getEmail()).thenReturn(EMAIL);
-        when(user.getRole()).thenReturn("USER");
-        when(user.getPassword()).thenReturn(passwordEncoder.encode(PASSWORD));
-        when(userRepository.findByEmail(EMAIL)).thenReturn(Optional.of(user));
-        doThrow(new MailSendException("Simulated SMTP outage"))
-                .when(mailSender).send(any(SimpleMailMessage.class));
-    }
+class AuthFlowIntegrationTest extends AuthenticatedIntegrationTestSupport {
 
     @Test
     void realJwtAndProtectedProfileWorkWhenSmtpFails() throws Exception {
@@ -99,7 +42,7 @@ class AuthFlowIntegrationTest {
         Jwt jwt = jwtDecoder.decode(token);
 
         assertEquals(EMAIL, jwt.getSubject());
-        assertEquals("USER", jwt.getClaimAsString("role"));
+        assertEquals("ADMIN", jwt.getClaimAsString("role"));
         assertEquals(3600, jwt.getExpiresAt().getEpochSecond() - jwt.getIssuedAt().getEpochSecond());
 
         mvc.perform(get("/api/auth/me").header(HttpHeaders.AUTHORIZATION, "Bearer " + token))
@@ -107,7 +50,7 @@ class AuthFlowIntegrationTest {
                 .andExpect(jsonPath("$.id").value(7))
                 .andExpect(jsonPath("$.fullName").value("Riya Sharma"))
                 .andExpect(jsonPath("$.email").value(EMAIL))
-                .andExpect(jsonPath("$.role").value("USER"));
+                .andExpect(jsonPath("$.role").value("ADMIN"));
 
         ArgumentCaptor<SimpleMailMessage> message = ArgumentCaptor.forClass(SimpleMailMessage.class);
         verify(mailSender).send(message.capture());
@@ -119,9 +62,8 @@ class AuthFlowIntegrationTest {
     @Test
     void invalidCredentialsDoNotSendEmail() throws Exception {
         mvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {"email":"riya@example.com","password":"wrong-password"}
-                                """))
+                        .content(objectMapper.writeValueAsString(java.util.Map.of(
+                                "email", EMAIL, "encryptedPassword", encryptedPassword("wrong-password")))))
                 .andExpect(status().isUnauthorized())
                 .andExpect(jsonPath("$.message").value("Invalid email or password"));
 
@@ -211,7 +153,7 @@ class AuthFlowIntegrationTest {
     void employeeAndLoginValidationRemainActive() throws Exception {
         mvc.perform(post("/api/auth/login").contentType(MediaType.APPLICATION_JSON)
                         .content("""
-                                {"email":"invalid-email","password":""}
+                                {"email":"invalid-email","encryptedPassword":""}
                                 """))
                 .andExpect(status().isBadRequest());
         verifyNoInteractions(mailSender);
@@ -232,9 +174,8 @@ class AuthFlowIntegrationTest {
     private String logInAndAwaitNotification() throws Exception {
         MvcResult result = mvc.perform(post("/api/auth/login")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content("""
-                                {"email":"Riya@Example.com","password":"test-password"}
-                                """))
+                        .content(objectMapper.writeValueAsString(java.util.Map.of(
+                                "email", "Riya@Example.com", "encryptedPassword", encryptedPassword(PASSWORD)))))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.tokenType").value("Bearer"))
                 .andExpect(jsonPath("$.expiresIn").value(3600))

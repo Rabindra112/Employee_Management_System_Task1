@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import {
   addEmployee,
@@ -9,6 +9,9 @@ import {
 } from "./api/employees";
 
 import EmployeeForm from "./components/EmployeeForm";
+import AccountAssignments from "./components/AccountAssignments";
+import UserRoles from "./components/UserRoles";
+import DocumentApprovals from "./components/DocumentApprovals";
 
 const PAGE_SIZE = 10;
 
@@ -18,7 +21,7 @@ const initialStats = {
   totalSalary: 0,
 };
 
-export default function Dashboard({ user, onLogout }) {
+export default function Dashboard({ user, onLogout, onRoleChanged }) {
   // Employee data
   const [employees, setEmployees] = useState([]);
   const [stats, setStats] = useState(initialStats);
@@ -38,6 +41,8 @@ export default function Dashboard({ user, onLogout }) {
   const [saving, setSaving] = useState(false);
   const [deletingId, setDeletingId] = useState(null);
   const [error, setError] = useState("");
+  const [employeeRevision, setEmployeeRevision] = useState(0);
+  const employeeRequest = useRef(null);
 
   // Format salary
   const formatSalary = (salary) => {
@@ -49,6 +54,9 @@ export default function Dashboard({ user, onLogout }) {
 
   // Fetch employees and dashboard statistics
   const loadEmployees = useCallback(async () => {
+    employeeRequest.current?.abort();
+    const controller = new AbortController();
+    employeeRequest.current = controller;
     setLoading(true);
 
     try {
@@ -58,9 +66,11 @@ export default function Dashboard({ user, onLogout }) {
           department,
           page,
           size: PAGE_SIZE,
-        }),
-        getStats(),
+        }, { signal: controller.signal }),
+        getStats({ signal: controller.signal }),
       ]);
+
+      if (controller.signal.aborted) return;
 
       setEmployees(employeeResponse.data.content);
       setTotalPages(employeeResponse.data.totalPages);
@@ -68,18 +78,20 @@ export default function Dashboard({ user, onLogout }) {
 
       setError("");
     } catch (err) {
+      if (controller.signal.aborted) return;
       setError(
-        err.response?.data?.message ||
+        err.response?.data?.detail || err.response?.data?.message ||
           "Unable to fetch employees. Please check the backend connection."
       );
     } finally {
-      setLoading(false);
+      if (!controller.signal.aborted) setLoading(false);
     }
   }, [name, department, page]);
 
   // Load data when search, department or page changes
   useEffect(() => {
     loadEmployees();
+    return () => employeeRequest.current?.abort();
   }, [loadEmployees]);
 
   // Open add employee form
@@ -116,6 +128,7 @@ export default function Dashboard({ user, onLogout }) {
 
       setShowForm(false);
       setEditingEmployee(null);
+      setEmployeeRevision(current => current + 1);
 
       // Return to first page after saving
       if (page !== 0) {
@@ -125,7 +138,7 @@ export default function Dashboard({ user, onLogout }) {
       }
     } catch (err) {
       setError(
-        err.response?.data?.message ||
+        err.response?.data?.detail || err.response?.data?.message ||
           "Unable to save employee. Please try again."
       );
     } finally {
@@ -148,6 +161,7 @@ export default function Dashboard({ user, onLogout }) {
 
     try {
       await deleteEmployee(employee.id);
+      setEmployeeRevision(current => current + 1);
 
       // Move to previous page if last record is deleted
       if (page > 0 && employees.length === 1) {
@@ -157,7 +171,7 @@ export default function Dashboard({ user, onLogout }) {
       }
     } catch (err) {
       setError(
-        err.response?.data?.message ||
+        err.response?.data?.detail || err.response?.data?.message ||
           "Unable to delete employee. Please try again."
       );
     } finally {
@@ -178,19 +192,19 @@ export default function Dashboard({ user, onLogout }) {
   };
 
   return (
-    <div className="layout">
+    <main className="layout admin-dashboard">
 
       {/* ================= HEADER ================= */}
       <header>
         <div>
-          
+          <span className="eyebrow">EMPLOYEE MANAGEMENT SYSTEM</span>
 
-          <h1>Employee Management System</h1>
+          <h1>Admin Dashboard</h1>
 
-          <p>Manage employee records efficiently.</p>
+          <p>Manage employee records, payroll totals and account access.</p>
         </div>
 
-        <div className="header-actions"><span>Welcome, {user?.fullName}</span><button className="secondary" onClick={onLogout}>Logout</button><button onClick={handleAdd}>
+        <div className="header-actions"><span>Welcome, {user?.fullName}</span><span className="role-badge">Admin</span><button type="button" className="secondary" onClick={onLogout}>Logout</button><button type="button" onClick={handleAdd}>
           + Add Employee
         </button></div>
       </header>
@@ -381,6 +395,12 @@ export default function Dashboard({ user, onLogout }) {
         </footer>
 
       </section>
-    </div>
+      <UserRoles currentUserId={user?.id} onRoleChanged={async updatedUser => {
+        setEmployeeRevision(current => current + 1);
+        await onRoleChanged?.(updatedUser);
+      }} />
+      <AccountAssignments employeeRevision={employeeRevision} />
+      <DocumentApprovals />
+    </main>
   );
 }

@@ -25,8 +25,12 @@ public class User {
     @Column(nullable = false)
     private String password;
     @Column(nullable = false)
-    private String role = "USER";
+    private String role = "EMPLOYEE";
     @Column(nullable = false, updatable = false)
     private Instant createdAt = Instant.now();
+
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "employee_id", unique = true)
+    private Employee employee;
 
 }

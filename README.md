@@ -3,6 +3,12 @@
 ## Developed By
 Rabindra Kumar Mahato
 
+## Admin and Employee access
+
+The application now opens a separate dashboard for each role. Admins manage employee records and account assignments. Employees view their own linked profile and documents. Public signup creates Employee accounts only.
+
+See [Admin and Employee setup](docs/ADMIN_EMPLOYEE_SETUP.md) for the first Admin setup, employee account linking, local startup and permissions.
+
 ## 1. Project Overview
 
 Employee Management System is a full-stack web application
@@ -83,7 +89,7 @@ Example:
 spring.datasource.url=jdbc:mysql://localhost:3306/employee_management
 spring.datasource.username=${DB_USERNAME:root}
 spring.datasource.password=${DB_PASSWORD}
-spring.jpa.hibernate.ddl-auto=update
+spring.jpa.hibernate.ddl-auto=validate
 
 server.port=8080
 
@@ -105,7 +111,13 @@ Steps:
 2. Create the employee_management database.
 3. Configure database credentials.
 4. Open the backend folder.
-5. Run:
+5. For local Windows development, run from the project root:
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\backend\run-local.ps1
+```
+
+The script generates a development signing secret and disables login email alerts by default. Flyway applies versioned migrations before Hibernate validates the schema. To run Maven directly from the backend folder, supply `JWT_SECRET` with at least 32 bytes first:
 
 ```bash
 mvn spring-boot:run
@@ -151,6 +163,11 @@ Ensure Vite is configured to use port 5174.
 | PUT | /api/employees/{id} | Update employee |
 | DELETE | /api/employees/{id} | Delete employee |
 | GET | /api/employees/stats | Dashboard statistics |
+| GET | /api/employees/me | Current employee's linked profile |
+| GET | /api/admin/accounts | Admin account listing |
+| PUT | /api/admin/accounts/{id}/employee | Admin links or unlinks an employee account |
+
+Employee management and statistics routes require ADMIN. `/api/employees/me` is available to an authenticated Employee or Admin. Document reads require authentication and enforce employee ownership; document writes require ADMIN.
 
 ## 9. Validation
 

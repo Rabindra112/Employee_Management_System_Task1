@@ -18,7 +18,5 @@ A React + Spring Boot + MySQL application for managing employees, with signup, l
 - Frontend: React, Vite, Axios, JavaScript, CSS.
 - Storage: MySQL. Email: Spring Mail with SMTP.
 
-## Scope and gaps
-The **uploaded version does not implement an address field** in `Employee`, `EmployeeRequest`, or `EmployeeService`. It also does **not** implement role-based endpoint restrictions: every authenticated user can call employee endpoints. No document type/version history, file operations, or batch-job feature was identified in the supplied application source. These should not be claimed as delivered.
 
 

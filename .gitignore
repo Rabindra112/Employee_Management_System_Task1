@@ -71,3 +71,7 @@ Desktop.ini
 # Cache
 .cache/
 **/.cache/
+
+# RSA key files
+/secrets/
+*.pem

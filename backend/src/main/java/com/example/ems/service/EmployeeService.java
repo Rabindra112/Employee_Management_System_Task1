@@ -4,6 +4,10 @@ import com.example.ems.dto.EmployeeRequest;
 import com.example.ems.entity.Employee;
 import com.example.ems.exception.ResourceNotFoundException;
 import com.example.ems.repository.EmployeeRepository;
+import com.example.ems.repository.DocumentRepository;
+import com.example.ems.repository.UserRepository;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -21,6 +25,8 @@ import java.util.Map;
 public class EmployeeService {
 
     private final EmployeeRepository repository;
+    private final DocumentRepository documents;
+    private final UserRepository users;
 
     // CREATE EMPLOYEE
     @Transactional
@@ -63,6 +69,11 @@ public class EmployeeService {
         log.info("Deleting employee with ID: {}", id);
 
         Employee employee = get(id);
+
+        if (documents.existsByEmployeeId(id) || users.existsByEmployeeId(id)) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT,
+                    "Unlink the employee account and resolve attached documents before deleting this employee");
+        }
 
         repository.delete(employee);
 

@@ -3,6 +3,7 @@ package com.example.ems.controller;
 import com.example.ems.dto.LoginRequest;
 import com.example.ems.entity.User;
 import com.example.ems.repository.UserRepository;
+import com.example.ems.security.RsaService;
 import com.example.ems.service.EmailService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -26,6 +27,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -50,13 +52,15 @@ class AuthControllerTest {
     private AuthController controller;
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws Exception {
         repository = mock(UserRepository.class);
         authenticationManager = mock(AuthenticationManager.class);
         jwtEncoder = mock(JwtEncoder.class);
         emailService = mock(EmailService.class);
+        RsaService rsaService = mock(RsaService.class);
+        when(rsaService.decrypt("encrypted-password")).thenReturn("test-password");
         controller = new AuthController(repository, mock(PasswordEncoder.class),
-                authenticationManager, jwtEncoder, emailService);
+                authenticationManager, jwtEncoder, emailService, rsaService);
         ReflectionTestUtils.setField(controller, "expiry", 3600L);
     }
 
@@ -80,7 +84,7 @@ class AuthControllerTest {
         assertEquals("test-password", authentication.getValue().getCredentials());
         assertEquals("employee-management", parameters.getValue().getClaims().getClaimAsString("iss"));
         assertEquals(NORMALIZED_LOGIN_EMAIL, parameters.getValue().getClaims().getSubject());
-        assertEquals("USER", parameters.getValue().getClaims().getClaimAsString("role"));
+        assertEquals("EMPLOYEE", parameters.getValue().getClaims().getClaimAsString("role"));
         assertEquals(parameters.getValue().getClaims().getIssuedAt(), loginTime.getValue());
         assertEquals(loginTime.getValue().plusSeconds(3600),
                 parameters.getValue().getClaims().getExpiresAt());
@@ -153,14 +157,19 @@ class AuthControllerTest {
     }
 
     private LoginRequest loginRequest() {
-        return new LoginRequest("  Login@Example.com  ", "test-password");
+        return new LoginRequest("  Login@Example.com  ", "encrypted-password");
     }
 
     private void assertSuccessfulResponse(Map<String, Object> response) {
         assertEquals(ACCESS_TOKEN, response.get("accessToken"));
         assertEquals("Bearer", response.get("tokenType"));
         assertEquals(3600L, response.get("expiresIn"));
-        assertEquals(Map.of("id", 7L, "fullName", FULL_NAME,
-                "email", REGISTERED_EMAIL, "role", "USER"), response.get("user"));
+        @SuppressWarnings("unchecked")
+        Map<String, Object> profile = (Map<String, Object>) response.get("user");
+        assertEquals(7L, profile.get("id"));
+        assertEquals(FULL_NAME, profile.get("fullName"));
+        assertEquals(REGISTERED_EMAIL, profile.get("email"));
+        assertEquals("EMPLOYEE", profile.get("role"));
+        assertNull(profile.get("employeeId"));
     }
 }

@@ -3,6 +3,8 @@ package com.example.ems.controller;
 import com.example.ems.dto.EmployeeRequest;
 import com.example.ems.entity.Employee;
 import com.example.ems.service.EmployeeService;
+import com.example.ems.service.CurrentUserService;
+import org.springframework.security.core.Authentication;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
@@ -26,6 +28,13 @@ import java.util.Map;
 public class EmployeeController {
 
     private final EmployeeService service;
+
+    private final CurrentUserService currentUsers;
+
+    @GetMapping("/me")
+    public Employee ownEmployee(Authentication authentication) {
+        return currentUsers.ownEmployee(authentication);
+    }
 
     // CREATE EMPLOYEE
     @PostMapping

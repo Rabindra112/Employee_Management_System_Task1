@@ -4,6 +4,10 @@ import com.example.ems.dto.EmployeeRequest;
 import com.example.ems.entity.Employee;
 import com.example.ems.exception.ResourceNotFoundException;
 import com.example.ems.repository.EmployeeRepository;
+import com.example.ems.repository.DocumentRepository;
+import com.example.ems.repository.UserRepository;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,12 +27,16 @@ import static org.mockito.Mockito.*;
 class EmployeeServiceTest {
 
     private EmployeeRepository repository;
+    private DocumentRepository documents;
+    private UserRepository users;
     private EmployeeService service;
 
     @BeforeEach
     void setup() {
         repository = mock(EmployeeRepository.class);
-        service = new EmployeeService(repository);
+        documents = mock(DocumentRepository.class);
+        users = mock(UserRepository.class);
+        service = new EmployeeService(repository, documents, users);
     }
 
     // =========================================
@@ -186,6 +194,34 @@ class EmployeeServiceTest {
 
         verify(repository, never())
                 .delete(any(Employee.class));
+    }
+
+    @Test
+    void deletingEmployeeWithDocumentsReturnsConflict() {
+        Employee employee = new Employee();
+        employee.setId(1L);
+        when(repository.findById(1L)).thenReturn(Optional.of(employee));
+        when(documents.existsByEmployeeId(1L)).thenReturn(true);
+
+        ResponseStatusException failure = assertThrows(ResponseStatusException.class,
+                () -> service.delete(1L));
+
+        assertEquals(HttpStatus.CONFLICT, failure.getStatusCode());
+        verify(repository, never()).delete(any(Employee.class));
+    }
+
+    @Test
+    void deletingEmployeeWithAccountReturnsConflict() {
+        Employee employee = new Employee();
+        employee.setId(1L);
+        when(repository.findById(1L)).thenReturn(Optional.of(employee));
+        when(users.existsByEmployeeId(1L)).thenReturn(true);
+
+        ResponseStatusException failure = assertThrows(ResponseStatusException.class,
+                () -> service.delete(1L));
+
+        assertEquals(HttpStatus.CONFLICT, failure.getStatusCode());
+        verify(repository, never()).delete(any(Employee.class));
     }
 
     // =========================================

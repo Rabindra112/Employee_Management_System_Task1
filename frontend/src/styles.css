@@ -14,7 +14,8 @@ body {
 }
 
 button,
-input {
+input,
+select {
   font: inherit;
 }
 
@@ -177,7 +178,8 @@ p {
    7. INPUT FIELDS
 ========================================= */
 
-input {
+input,
+select {
   border: 1px solid #d6deeb;
   border-radius: 8px;
   padding: 10px 12px;
@@ -188,7 +190,8 @@ input {
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
 
-input:focus {
+input:focus,
+select:focus {
   border-color: #275ce4;
   box-shadow: 0 0 0 3px rgba(39, 92, 228, 0.1);
 }
@@ -429,3 +432,237 @@ footer button {
   }
 }
 .header-actions{display:flex;gap:12px;align-items:center;flex-wrap:wrap}.auth-shell{min-height:100vh;display:grid;place-items:center;background:linear-gradient(135deg,#e8f1ff,#f7faff);padding:20px}.auth-card{background:white;border-radius:18px;box-shadow:0 15px 55px #1a3b6a20;padding:38px;width:min(100%,430px);color:#17345b}.auth-brand{font-size:22px;font-weight:800;color:#1358b3;margin-bottom:24px}.auth-brand span{font-size:13px;font-weight:500;color:#65748a}.auth-card h1{font-size:28px;margin:0 0 6px}.auth-card>p{color:#64748b;margin-bottom:22px}.auth-card form{display:grid;gap:16px}.auth-card label{display:grid;gap:7px;font-weight:600;font-size:14px}.auth-card input{padding:12px 14px;border:1px solid #cbd5e1;border-radius:9px;font-size:15px;width:100%;box-sizing:border-box}.auth-card form>button{padding:13px;background:#145cbb;color:white;border:0;border-radius:9px;font-weight:700;cursor:pointer}.auth-card form>button:disabled{opacity:.6}.auth-switch{text-align:center;font-size:14px}.auth-switch button{border:0;background:transparent;color:#145cbb;font-weight:700;cursor:pointer}.auth-error,.auth-success{padding:11px;border-radius:8px;margin-bottom:16px}.auth-error{background:#fee2e2;color:#991b1b}.auth-success{background:#dcfce7;color:#166534}
+
+.role-badge {
+  display: inline-block;
+  padding: 6px 10px;
+  border-radius: 20px;
+  background: #eaf0ff;
+  color: #244eb1;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.user-roles {
+  margin-top: 22px;
+}
+
+.user-roles > p {
+  line-height: 1.65;
+}
+
+.user-roles .user-roles-help {
+  margin-top: 8px;
+  font-size: 13px;
+}
+
+.user-roles .error,
+.user-roles .auth-success,
+.user-roles .table-wrap {
+  margin-top: 18px;
+}
+
+.user-roles .user-roles-self {
+  display: inline-block;
+  margin-left: 8px;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.user-roles .user-role-user {
+  background: #edf7f1;
+  color: #17633d;
+}
+
+.user-role-form {
+  display: grid;
+  gap: 10px;
+  min-width: 220px;
+}
+
+.user-role-form label {
+  display: grid;
+  gap: 7px;
+  font-size: 13px;
+}
+
+.user-role-form select {
+  width: 100%;
+}
+
+.account-assignments,
+.employee-documents,
+.profile-card,
+.pending-assignment {
+  margin-top: 22px;
+  margin-bottom: 22px;
+}
+
+.account-assignments > p,
+.employee-documents > p,
+.profile-card > p,
+.pending-assignment p {
+  line-height: 1.65;
+}
+
+.account-assignments .error,
+.account-assignments .auth-success,
+.employee-documents .error {
+  margin-top: 16px;
+}
+
+.assignment-form {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) auto;
+  gap: 16px;
+  align-items: end;
+  margin-top: 22px;
+}
+
+.assignment-form label {
+  display: grid;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  min-width: 0;
+}
+
+.assignment-form input,
+.assignment-form select {
+  width: 100%;
+  min-width: 0;
+}
+
+.assignment-form .field-help {
+  grid-column: 1 / -1;
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.section-status {
+  padding: 22px 0;
+  line-height: 1.6;
+}
+
+.profile-details {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 22px;
+  margin: 0;
+}
+
+.profile-details dt {
+  color: #64748b;
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
+.profile-details dd {
+  margin: 0;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.profile-card > p {
+  margin-top: 22px;
+  font-size: 14px;
+}
+
+.employee-dashboard .stats strong {
+  font-size: clamp(20px, 2.5vw, 28px);
+  overflow-wrap: anywhere;
+}
+
+.pending-assignment h2 {
+  margin-top: 18px;
+  margin-bottom: 10px;
+}
+
+.pending-assignment button {
+  margin-top: 18px;
+}
+
+.document-list,
+.version-list {
+  list-style: none;
+  margin: 18px 0 0;
+  padding: 0;
+}
+
+.document-item {
+  border-top: 1px solid #e4e9f2;
+  padding: 18px 0;
+}
+
+.document-item:last-child {
+  padding-bottom: 0;
+}
+
+.document-summary,
+.version-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.document-summary > div,
+.version-list li > div {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.document-summary p {
+  margin-top: 7px;
+  font-size: 13px;
+}
+
+.document-summary button,
+.version-list button {
+  flex-shrink: 0;
+}
+
+.document-versions {
+  background: #f6f8fc;
+  border-radius: 10px;
+  padding: 16px;
+  margin-top: 16px;
+}
+
+.version-list {
+  margin: 0;
+}
+
+.version-list li + li {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #e4e9f2;
+}
+
+.version-list strong {
+  font-size: 14px;
+}
+
+.version-list span {
+  display: block;
+  color: #64748b;
+  font-size: 13px;
+  margin-top: 6px;
+}
+
+@media (max-width: 750px) {
+  .assignment-form,
+  .profile-details {
+    grid-template-columns: 1fr;
+  }
+
+  .document-summary,
+  .version-list li {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .header-actions {
+    gap: 10px;
+  }
+}
