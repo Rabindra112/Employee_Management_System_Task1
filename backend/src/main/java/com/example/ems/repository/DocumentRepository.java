@@ -12,20 +12,16 @@ import java.util.Optional;
 import com.example.ems.entity.Document;
 
 public interface DocumentRepository
-        extends JpaRepository<Document, Long> {
+                extends JpaRepository<Document, Long> {
 
-    List<Document> findByEmployeeId(Long employeeId);
+        List<Document> findByEmployeeId(Long employeeId);
 
-    List<Document> findByOwnerIdOrderByIdDesc(Long ownerId);
+        List<Document> findByOwnerIdOrderByIdDesc(Long ownerId);
 
-    boolean existsByEmployeeId(Long employeeId);
+        boolean existsByEmployeeId(Long employeeId);
 
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @org.springframework.data.jpa.repository.Query(
-            "SELECT d FROM Document d WHERE d.id = :id"
-    )
-    Optional<Document> findByIdForUpdate(
-            @org.springframework.data.repository.query.Param("id")
-            Long id
-    );
+        @Lock(LockModeType.PESSIMISTIC_WRITE)
+        @org.springframework.data.jpa.repository.Query("SELECT d FROM Document d WHERE d.id = :id")
+        Optional<Document> findByIdForUpdate(
+                        @org.springframework.data.repository.query.Param("id") Long id);
 }

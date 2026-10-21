@@ -46,6 +46,8 @@ import static org.mockito.Mockito.when;
                 + "org.springframework.boot.autoconfigure.orm.jpa.HibernateJpaAutoConfiguration,"
                 + "org.springframework.boot.autoconfigure.data.jpa.JpaRepositoriesAutoConfiguration",
         "app.jwt.secret=integration-test-secret-with-more-than-32-bytes",
+        "app.employee-import.enabled=false",
+        "app.employee-export.enabled=false",
         "spring.mail.username=sender@example.com",
         "app.mail.login-alert-enabled=true"
 })

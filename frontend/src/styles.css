@@ -328,6 +328,33 @@ footer button {
   margin-top: 10px;
 }
 
+.employee-import {
+  margin-top: 18px;
+}
+
+.employee-import .toolbar {
+  align-items: flex-start;
+}
+
+.employee-import-form {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 18px 0;
+}
+
+.employee-import-form label {
+  font-weight: 600;
+}
+
+.employee-import-message {
+  display: block;
+  max-width: 260px;
+  margin-top: 4px;
+  color: #9b202d;
+}
+
 /* =========================================
    13. RESPONSIVE DESIGN
 ========================================= */

@@ -22,7 +22,7 @@ import java.util.Map;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class EmployeeService {
+public class EmployeeService implements EmployeeCreator {
 
     private final EmployeeRepository repository;
     private final DocumentRepository documents;
@@ -30,6 +30,7 @@ public class EmployeeService {
 
     // CREATE EMPLOYEE
     @Transactional
+    @Override
     public Employee create(EmployeeRequest request) {
 
         log.info("Creating new employee");

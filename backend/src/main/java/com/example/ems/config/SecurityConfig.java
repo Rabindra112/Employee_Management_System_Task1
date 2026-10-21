@@ -30,162 +30,155 @@ import java.util.List;
 @Configuration
 public class SecurityConfig {
 
-    @Bean
-    PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
-
-    @Bean
-    UserDetailsService userDetailsService(UserRepository repo) {
-        return email -> repo.findByEmail(email)
-                .map(u -> User.withUsername(u.getEmail())
-                        .password(u.getPassword())
-                        .roles(UserRole.normalize(u.getRole()))
-                        .build())
-                .orElseThrow(() ->
-                        new UsernameNotFoundException("Invalid credentials"));
-    }
-
-    @Bean
-    AuthenticationManager authenticationManager(
-            UserDetailsService uds,
-            PasswordEncoder encoder) {
-
-        DaoAuthenticationProvider provider =
-                new DaoAuthenticationProvider(uds);
-
-        provider.setPasswordEncoder(encoder);
-
-        return new ProviderManager(provider);
-    }
-
-    @Bean
-    JwtEncoder jwtEncoder(
-            @Value("${app.jwt.secret}") String secret) {
-
-        return new NimbusJwtEncoder(
-                new ImmutableSecret<>(
-                        secret.getBytes(StandardCharsets.UTF_8)
-                )
-        );
-    }
-
-    @Bean
-    JwtDecoder jwtDecoder(
-            @Value("${app.jwt.secret}") String secret) {
-
-        if (secret.getBytes(StandardCharsets.UTF_8).length < 32) {
-            throw new IllegalArgumentException(
-                    "JWT_SECRET must be at least 32 bytes"
-            );
+        @Bean
+        PasswordEncoder passwordEncoder() {
+                return new BCryptPasswordEncoder();
         }
 
-        NimbusJwtDecoder decoder = NimbusJwtDecoder
-                .withSecretKey(
-                        new SecretKeySpec(
-                                secret.getBytes(StandardCharsets.UTF_8),
-                                "HmacSHA256"
-                        )
-                )
-                .macAlgorithm(MacAlgorithm.HS256)
-                .build();
-        decoder.setJwtValidator(JwtValidators.createDefaultWithIssuer("employee-management"));
-        return decoder;
-    }
+        @Bean
+        UserDetailsService userDetailsService(UserRepository repo) {
+                return email -> repo.findByEmail(email)
+                                .map(u -> User.withUsername(u.getEmail())
+                                                .password(u.getPassword())
+                                                .roles(UserRole.normalize(u.getRole()))
+                                                .build())
+                                .orElseThrow(() -> new UsernameNotFoundException("Invalid credentials"));
+        }
 
-    @Bean
-    JwtAuthenticationConverter accountJwtAuthenticationConverter(UserRepository users) {
-        JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
-        converter.setJwtGrantedAuthoritiesConverter(token -> {
-            if (token.getSubject() == null || token.getSubject().isBlank()) {
-                throw new InvalidBearerTokenException("Missing account subject");
-            }
-            var user = users.findByEmail(token.getSubject())
-                    .orElseThrow(() -> new InvalidBearerTokenException("Account no longer exists"));
-            String role = UserRole.normalize(user.getRole());
-            if (role.isEmpty()) throw new InvalidBearerTokenException("Account role is not supported");
-            // Use current database permissions, so role changes apply to existing tokens too.
-            return List.of(new SimpleGrantedAuthority("ROLE_" + role));
-        });
-        return converter;
-    }
+        @Bean
+        AuthenticationManager authenticationManager(
+                        UserDetailsService uds,
+                        PasswordEncoder encoder) {
 
-    @Bean
-    CorsConfigurationSource corsConfigurationSource(
-            @Value("${app.frontend-origin}") String origin) {
+                DaoAuthenticationProvider provider = new DaoAuthenticationProvider(uds);
 
-        CorsConfiguration c = new CorsConfiguration();
+                provider.setPasswordEncoder(encoder);
 
-        c.setAllowedOrigins(List.of(origin));
+                return new ProviderManager(provider);
+        }
 
-        c.setAllowedMethods(
-                List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
-        );
+        @Bean
+        JwtEncoder jwtEncoder(
+                        @Value("${app.jwt.secret}") String secret) {
 
-        c.setAllowedHeaders(
-                List.of("Authorization", "Content-Type", "Origin", "Accept")
-        );
+                return new NimbusJwtEncoder(
+                                new ImmutableSecret<>(
+                                                secret.getBytes(StandardCharsets.UTF_8)));
+        }
 
-        UrlBasedCorsConfigurationSource src =
-                new UrlBasedCorsConfigurationSource();
+        @Bean
+        JwtDecoder jwtDecoder(
+                        @Value("${app.jwt.secret}") String secret) {
 
-        src.registerCorsConfiguration("/**", c);
+                if (secret.getBytes(StandardCharsets.UTF_8).length < 32) {
+                        throw new IllegalArgumentException(
+                                        "JWT_SECRET must be at least 32 bytes");
+                }
 
-        return src;
-    }
+                NimbusJwtDecoder decoder = NimbusJwtDecoder
+                                .withSecretKey(
+                                                new SecretKeySpec(
+                                                                secret.getBytes(StandardCharsets.UTF_8),
+                                                                "HmacSHA256"))
+                                .macAlgorithm(MacAlgorithm.HS256)
+                                .build();
+                decoder.setJwtValidator(JwtValidators.createDefaultWithIssuer("employee-management"));
+                return decoder;
+        }
 
-    @Bean
-    SecurityFilterChain filterChain(HttpSecurity http,
-                                    JwtAuthenticationConverter accountJwtAuthenticationConverter) throws Exception {
+        @Bean
+        JwtAuthenticationConverter accountJwtAuthenticationConverter(UserRepository users) {
+                JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
+                converter.setJwtGrantedAuthoritiesConverter(token -> {
+                        if (token.getSubject() == null || token.getSubject().isBlank()) {
+                                throw new InvalidBearerTokenException("Missing account subject");
+                        }
+                        var user = users.findByEmail(token.getSubject())
+                                        .orElseThrow(() -> new InvalidBearerTokenException("Account no longer exists"));
+                        String role = UserRole.normalize(user.getRole());
+                        if (role.isEmpty())
+                                throw new InvalidBearerTokenException("Account role is not supported");
+                        // Use current database permissions, so role changes apply to existing tokens
+                        // too.
+                        return List.of(new SimpleGrantedAuthority("ROLE_" + role));
+                });
+                return converter;
+        }
 
-        return http
-                .csrf(csrf -> csrf.disable())
+        @Bean
+        CorsConfigurationSource corsConfigurationSource(
+                        @Value("${app.frontend-origin}") String origin) {
 
-                .cors(cors -> {
-                })
+                CorsConfiguration c = new CorsConfiguration();
 
-                .sessionManagement(s ->
-                        s.sessionCreationPolicy(
-                                SessionCreationPolicy.STATELESS
-                        )
-                )
+                c.setAllowedOrigins(List.of(origin));
 
-                .authorizeHttpRequests(auth -> auth
+                c.setAllowedMethods(
+                                List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
 
-                        // Allow login and signup
-                        .requestMatchers(
-                                HttpMethod.POST,
-                                "/api/auth/login",
-                                "/api/auth/signup"
-                        )
-                        .permitAll()
+                c.setAllowedHeaders(
+                                List.of("Authorization", "Content-Type", "Origin", "Accept"));
 
-                        // Allow RSA public key retrieval
-                        .requestMatchers(
-                                HttpMethod.GET,
-                                "/api/auth/public-key"
-                        )
-                        .permitAll()
+                UrlBasedCorsConfigurationSource src = new UrlBasedCorsConfigurationSource();
 
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/api/employees/me").hasAnyRole("ADMIN", "EMPLOYEE")
-                        .requestMatchers("/api/employees", "/api/employees/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/api/documents/my").hasRole("EMPLOYEE")
-                        .requestMatchers(HttpMethod.POST, "/api/documents/my/**").hasRole("EMPLOYEE")
-                        .requestMatchers(HttpMethod.POST, "/api/documents/*/resubmit").hasRole("EMPLOYEE")
-                        .requestMatchers("/api/documents/pending", "/api/documents/*/versions/*/approve",
-                                "/api/documents/*/versions/*/reject").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.GET, "/api/documents/**").hasAnyRole("ADMIN", "EMPLOYEE")
-                        .requestMatchers("/api/documents/**").hasRole("ADMIN")
+                src.registerCorsConfiguration("/**", c);
 
-                        // All other endpoints require authentication
-                        .anyRequest()
-                        .authenticated()
-                )
+                return src;
+        }
 
-                .oauth2ResourceServer(o -> o.jwt(j ->
-                        j.jwtAuthenticationConverter(accountJwtAuthenticationConverter)))
+        @Bean
+        SecurityFilterChain filterChain(HttpSecurity http,
+                        JwtAuthenticationConverter accountJwtAuthenticationConverter) throws Exception {
 
-                .build();
-    }
+                return http
+                                .csrf(csrf -> csrf.disable())
+
+                                .cors(cors -> {
+                                })
+
+                                .sessionManagement(s -> s.sessionCreationPolicy(
+                                                SessionCreationPolicy.STATELESS))
+
+                                .authorizeHttpRequests(auth -> auth
+
+                                                // Allow login and signup
+                                                .requestMatchers(
+                                                                HttpMethod.POST,
+                                                                "/api/auth/login",
+                                                                "/api/auth/signup")
+                                                .permitAll()
+
+                                                // Allow RSA public key retrieval
+                                                .requestMatchers(
+                                                                HttpMethod.GET,
+                                                                "/api/auth/public-key")
+                                                .permitAll()
+
+                                                .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                                                .requestMatchers(HttpMethod.GET, "/api/employees/me")
+                                                .hasAnyRole("ADMIN", "EMPLOYEE")
+                                                .requestMatchers("/api/employees", "/api/employees/**").hasRole("ADMIN")
+                                                .requestMatchers(HttpMethod.GET, "/api/documents/my")
+                                                .hasRole("EMPLOYEE")
+                                                .requestMatchers(HttpMethod.POST, "/api/documents/my/**")
+                                                .hasRole("EMPLOYEE")
+                                                .requestMatchers(HttpMethod.POST, "/api/documents/*/resubmit")
+                                                .hasRole("EMPLOYEE")
+                                                .requestMatchers("/api/documents/pending",
+                                                                "/api/documents/*/versions/*/approve",
+                                                                "/api/documents/*/versions/*/reject")
+                                                .hasRole("ADMIN")
+                                                .requestMatchers(HttpMethod.GET, "/api/documents/**")
+                                                .hasAnyRole("ADMIN", "EMPLOYEE")
+                                                .requestMatchers("/api/documents/**").hasRole("ADMIN")
+
+                                                // All other endpoints require authentication
+                                                .anyRequest()
+                                                .authenticated())
+
+                                .oauth2ResourceServer(o -> o.jwt(
+                                                j -> j.jwtAuthenticationConverter(accountJwtAuthenticationConverter)))
+
+                                .build();
+        }
 }

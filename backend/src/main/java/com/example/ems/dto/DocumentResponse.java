@@ -5,20 +5,21 @@ import com.example.ems.entity.DocumentApprovalStatus;
 
 public record DocumentResponse(
 
-        Long id,
+                Long id,
 
-        Long employeeId,
+                Long employeeId,
 
-        String documentType,
+                String documentType,
 
-        String documentName,
+                String documentName,
 
-        Integer currentVersion,
+                Integer currentVersion,
 
-        Instant createdAt,
-        DocumentApprovalStatus status,
-        String rejectionReason,
-        Integer latestApprovedVersion,
-        Long ownerUserId
+                Instant createdAt,
+                DocumentApprovalStatus status,
+                String rejectionReason,
+                Integer latestApprovedVersion,
+                Long ownerUserId
 
-) {}
+) {
+}

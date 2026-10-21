@@ -12,6 +12,8 @@ import EmployeeForm from "./components/EmployeeForm";
 import AccountAssignments from "./components/AccountAssignments";
 import UserRoles from "./components/UserRoles";
 import DocumentApprovals from "./components/DocumentApprovals";
+import EmployeeBulkImport from "./components/EmployeeBulkImport";
+import { downloadEmployees } from "./api/employeeImports";
 
 const PAGE_SIZE = 10;
 
@@ -99,6 +101,25 @@ export default function Dashboard({ user, onLogout, onRoleChanged }) {
     setEditingEmployee(null);
     setShowForm(true);
     setError("");
+  };
+
+  const handleEmployeeUpload = () => {
+    document.getElementById("employee-bulk-import")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    document.getElementById("employee-import-file")?.focus({ preventScroll: true });
+  };
+
+  const handleEmployeeDownload = async () => {
+    try {
+      const response = await downloadEmployees("csv");
+      const url = URL.createObjectURL(response.data);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "employees.csv";
+      link.click();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch {
+      setError("Unable to download employees. Please try again.");
+    }
   };
 
   // Open edit employee form
@@ -204,7 +225,7 @@ export default function Dashboard({ user, onLogout, onRoleChanged }) {
           <p>Manage employee records, payroll totals and account access.</p>
         </div>
 
-        <div className="header-actions"><span>Welcome, {user?.fullName}</span><span className="role-badge">Admin</span><button type="button" className="secondary" onClick={onLogout}>Logout</button><button type="button" onClick={handleAdd}>
+        <div className="header-actions"><span>Welcome, {user?.fullName}</span><span className="role-badge">Admin</span><button type="button" className="secondary" onClick={handleEmployeeUpload}>Upload CSV</button><button type="button" className="secondary" onClick={handleEmployeeDownload}>Download CSV</button><button type="button" className="secondary" onClick={onLogout}>Logout</button><button type="button" onClick={handleAdd}>
           + Add Employee
         </button></div>
       </header>
@@ -401,6 +422,10 @@ export default function Dashboard({ user, onLogout, onRoleChanged }) {
       }} />
       <AccountAssignments employeeRevision={employeeRevision} />
       <DocumentApprovals />
+      <EmployeeBulkImport onImported={() => {
+        setEmployeeRevision(current => current + 1);
+        loadEmployees();
+      }} />
     </main>
   );
 }

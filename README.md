@@ -196,5 +196,8 @@ Common HTTP status codes:
 
 Additional documentation is available in the docs folder
 
+- [Complete API reference and Postman guide](docs/API_AND_POSTMAN_GUIDE.md)
+- [Batch processing and document versioning](docs/BATCH_PROCESSING_AND_DOCUMENT_VERSIONING.md)
+
 
 
